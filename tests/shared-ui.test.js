@@ -85,3 +85,14 @@ test('lost response retries the accepted submission without creating another rec
   p.fill();p.submit();await waitFor(()=>p.get('notice').textContent.includes('Response lost'));assert.ok(p.w.sessionStorage.getItem('submit-entry:'+f.entry.id));
   p.submit();await waitFor(()=>p.get('notice').textContent.includes('Submission accepted'));assert.equal(f.app.db.prepare('SELECT count(*) as n FROM receipts').get().n,1);assert.equal(p.w.sessionStorage.getItem('submit-entry:'+f.entry.id),null);
 });
+
+test('participant progress tracks answers, jumps to the first blank, and survives draft reload',async t=>{
+  const f=await setup(t),p=await page(t,f);await waitFor(()=>p.get('entry-questions').querySelectorAll('select').length===25);
+  assert.equal(p.get('picks-count').textContent,'0 of 25 picks answered');
+  const selects=[...p.get('entry-questions').querySelectorAll('select')];
+  selects[0].value=selects[0].options[1].value;selects[0].dispatchEvent(new p.w.Event('change',{bubbles:true}));
+  assert.equal(p.get('picks-progress').value,1);p.get('next-unanswered').click();assert.equal(p.w.document.activeElement,selects[1]);
+  p.get('save-entry').click();await waitFor(()=>p.get('notice').textContent.includes('Draft saved'));
+  assert.equal(p.get('picks-count').textContent,'1 of 25 picks answered');assert.equal(p.get('receipt').textContent.includes('Submission accepted'),false);
+  p.fill();assert.equal(p.get('picks-progress').value,25);assert.equal(p.get('next-unanswered').hidden,true);
+});

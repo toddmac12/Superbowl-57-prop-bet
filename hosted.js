@@ -123,7 +123,13 @@
     else{receipt.classList.remove('receipt');receipt.append(el('h2','Not submitted yet'),el('p','A saved draft is not an accepted submission. Complete every question and submit.'));}
     const draftDiff=entry.submitted&&JSON.stringify(entry.draft)!==JSON.stringify(entry.submitted);
     $('entry-state').textContent=locked?'Entry locked. Only the last accepted submission counts.':draftDiff?'Draft changes are not submitted. Your earlier accepted picks still count.':'You may save drafts or submit revised picks before the deadline.';
-    updateLock();
+    updateProgress();updateLock();
+  }
+  function updateProgress(){
+    const selects=[...$('entry-questions').querySelectorAll('select')],count=selects.filter(s=>s.value).length;
+    $('picks-count').textContent=`${count} of ${selects.length} picks answered`;
+    $('picks-progress').max=selects.length||1;$('picks-progress').value=count;
+    $('next-unanswered').hidden=count===selects.length;
   }
   function updateLock(){
     if(!state.entry)return;const locked=Date.now()+state.clockOffset>=Date.parse(state.entry.game.lockAt);
@@ -146,7 +152,8 @@
     const data=await api('/api/games/'+state.active.id+'/entries','POST',{...pending,consent:$('public-consent').checked,gameVersion:state.active.questionVersion});
     state.session.participant={authenticated:true,csrf:data.csrf};$('management-link').value=data.managementLink;$('created-entry').hidden=false;$('join-panel').hidden=true;forget(storageKey);tell('Private entry created. Save your management link before continuing.');
   },event.submitter);});
-  $('entry-questions').addEventListener('change',()=>{state.dirty=true;});
+  $('entry-questions').addEventListener('change',()=>{state.dirty=true;updateProgress();});
+  $('next-unanswered').addEventListener('click',()=>{const first=[...$('entry-questions').querySelectorAll('select')].find(s=>!s.value&&!s.disabled);if(first){first.scrollIntoView?.({block:'center'});first.focus({preventScroll:true});}});
   $('save-entry').addEventListener('click',()=>act(async()=>{const data=await api('/api/entry/draft','PUT',submissionPayload(),'participant');renderEntry(data.entry);tell('Draft saved. It does not count until submitted.');},$('save-entry')));
   $('entry-form').addEventListener('submit',event=>{event.preventDefault();act(async()=>{
     const key='submit-entry:'+state.entry.id;let pending=recalled(key);if(pending&&JSON.stringify(pending.picks)!==JSON.stringify(readAnswers($('entry-questions')))&&!confirm('A prior submission is awaiting confirmation. Retry its original picks? Current unsaved changes will not be submitted. Use Reload to check the server instead.'))return;if(!pending){pending={...submissionPayload(),requestId:random()};remember(key,pending);}
