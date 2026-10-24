@@ -5,10 +5,11 @@ const path = require("node:path");
 const { JSDOM } = require("jsdom");
 const root = path.join(__dirname, "..");
 const KEY = "super-bowl-lvii-sheet-v1";
-function page(saved, storageFails = false) {
+function page(saved, storageFails = false, storageBackend = null) {
   const dom = new JSDOM(fs.readFileSync(path.join(root,"index.html"),"utf8"),
     { url:"https://sheet.example/", runScripts:"outside-only" });
   const w = dom.window;
+  if (storageBackend) Object.defineProperty(w,"localStorage",{value:storageBackend});
   if (saved !== undefined) w.localStorage.setItem(KEY, saved);
   w.confirm = () => true;
   w.prompt = () => null;
@@ -144,4 +145,42 @@ test("invalid import leaves current data unchanged; valid import requires replac
     await importData(p,JSON.stringify(other));
     assert.equal(JSON.parse(p.saved()).entries[0].name,"Bob");
   } finally { p.close(); }
+});
+
+test("a stale tab cannot overwrite newer saved participants", () => {
+  let raw = null;
+  const shared = {getItem:()=>raw, setItem:(_,value)=>{raw=value;}};
+  const a=page(undefined,false,shared), b=page(undefined,false,shared);
+  try {
+    a.add("Alice");
+    b.add("Bob");
+    assert.deepEqual(JSON.parse(raw).entries.map(e=>e.name),["Alice"]);
+    assert.match(b.get("storage-warning").textContent,/Another tab/);
+    assert.equal(b.get("participant").selectedOptions[0].textContent,"Bob");
+  } finally { a.close(); b.close(); }
+});
+
+test("storage events synchronize clean tabs and preserve unsaved tab edits", () => {
+  let raw=null;
+  const shared={getItem:()=>raw,setItem:(_,value)=>{raw=value;}};
+  const a=page(undefined,false,shared),b=page(undefined,false,shared);
+  const sync=()=>b.w.dispatchEvent(new b.w.StorageEvent("storage",{key:KEY,newValue:raw}));
+  try {
+    a.add("Alice"); sync();
+    assert.equal(b.get("participant").selectedOptions[0].textContent,"Alice");
+    b.add("Bob");
+    assert.equal(JSON.parse(raw).entries.length,2);
+    a.add("Carol"); // A did not receive B's save; its write is rejected.
+    assert.equal(JSON.parse(raw).entries.length,2);
+    assert.match(a.get("status").textContent,/Conflicting/);
+  } finally { a.close(); b.close(); }
+});
+
+test("an empty saved string is treated as corrupt data and preserved", () => {
+  const p=page("");
+  try {
+    p.add("Alice");
+    assert.equal(p.saved(),"");
+    assert.equal(p.get("storage-warning").hidden,false);
+  } finally {p.close();}
 });

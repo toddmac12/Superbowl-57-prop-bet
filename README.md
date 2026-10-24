@@ -26,7 +26,7 @@ These remain historical Super Bowl LVII questions, not a live/current-season gam
 
 ## Saving and portability
 
-Changes are saved only in this browser's local storage. Devices and browsers do not synchronize automatically. Clearing browser data or changing the serving address/port can make a different sheet appear. Export JSON regularly to keep a portable copy. Import replaces the whole sheet after confirmation; it does not merge entries.
+Changes are saved only in this browser's local storage. Devices and browsers do not synchronize automatically. Tabs on the same origin receive saved updates. A stale tab stops saving rather than overwriting a newer sheet; export unsaved edits before reloading or explicitly replacing the sheet. Clearing browser data or changing the serving address/port can make a different sheet appear. Export JSON regularly to keep a portable copy. Import replaces the whole sheet after confirmation; it does not merge entries.
 
 If storage is blocked or full, the page displays a warning and keeps changes in the current tab. Export before closing. Invalid saved data is preserved rather than silently overwritten until an explicit import/reset. Names and imported data are rendered as text. Backups are limited to 1 MB and 500 uniquely named participants. All app assets are local; there are no analytics, remote fonts, or third-party runtime requests.
 

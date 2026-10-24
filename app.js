@@ -4,7 +4,7 @@
   const KEY = "super-bowl-lvii-sheet-v1";
   const $ = id => document.getElementById(id);
   let state = C.createState(), selectedId = "", mode = "picks", storageBlocked = false;
-  let hadStoredData = false;
+  let hadStoredData = false, lastSavedRaw = null, hasUnsaved = false;
   function message(text, error = false) {
     $("status").textContent = text;
     $("status").classList.toggle("error", error);
@@ -13,23 +13,35 @@
   try {
     const raw = localStorage.getItem(KEY);
     hadStoredData = raw !== null;
-    if (raw) state = C.validateState(JSON.parse(raw));
+    lastSavedRaw = raw;
+    if (raw !== null) state = C.validateState(JSON.parse(raw));
   } catch (error) {
     storageBlocked = true;
     warn("Saved data could not be read. Changes will stay only in this tab. Export a backup before closing. Import or reset to explicitly replace saved data.");
   }
   selectedId = state.entries[0]?.id || "";
-  function persist() {
+  function persist(replace = false) {
     if (storageBlocked) {
+      hasUnsaved = true;
       message("Changes kept in this tab only. Export a backup.", true);
       return;
     }
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      const currentRaw = localStorage.getItem(KEY);
+      if (!replace && currentRaw !== lastSavedRaw) {
+        storageBlocked = true; hasUnsaved = true;
+        warn("Another tab changed this sheet. Saving stopped to protect those changes. Export this tab's edits, then reload or explicitly import a backup.");
+        message("Conflicting tab changes: edits kept in this tab only.", true);
+        return;
+      }
+      const raw = JSON.stringify(state);
+      localStorage.setItem(KEY, raw);
+      lastSavedRaw = raw; hasUnsaved = false;
       hadStoredData = true;
       $("storage-warning").hidden = true;
       message("Saved in this browser.");
     } catch (error) {
+      hasUnsaved = true;
       warn("Browser storage is unavailable or full. Export a JSON backup to keep your changes.");
       message("Changes kept in this tab only.", true);
     }
@@ -169,14 +181,30 @@
       if ((hadStoredData || state.entries.length || Object.keys(state.results).length) &&
           !window.confirm("Replace this entire sheet with the imported backup? Export your current sheet first if you want to keep it.")) return;
       state = imported; selectedId = state.entries[0]?.id || ""; storageBlocked = false;
-      persist(); render();
+      persist(true); render();
     } catch (error) { message("Import failed: " + error.message, true); }
     finally { event.target.value = ""; }
   });
   $("reset").addEventListener("click", () => {
     if (!window.confirm("Delete all participants, predictions, and results from this browser? Export a backup first to keep a copy.")) return;
     state = C.createState(); selectedId = ""; storageBlocked = false;
-    persist(); render();
+    persist(true); render();
+  });
+  window.addEventListener("storage", event => {
+    if (event.key !== KEY || event.newValue === lastSavedRaw) return;
+    if (hasUnsaved || storageBlocked) {
+      warn("Another tab changed the saved sheet. Your unsaved edits remain here; export them before reloading or importing.");
+      return;
+    }
+    try {
+      const updated = event.newValue === null ? C.createState() : C.validateState(JSON.parse(event.newValue));
+      state = updated; lastSavedRaw = event.newValue; hadStoredData = event.newValue !== null;
+      if (!state.entries.some(entry => entry.id === selectedId)) selectedId = state.entries[0]?.id || "";
+      render(); message("Updated from another tab.");
+    } catch (error) {
+      storageBlocked = true;
+      warn("Another tab wrote unreadable data. Saving stopped; export this tab's sheet before reloading or replacing it.");
+    }
   });
   render();
 })();
