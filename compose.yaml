@@ -1,0 +1,15 @@
+services:
+  game:
+    build: .
+    ports:
+      - "127.0.0.1:5002:5002"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5002
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:5002}
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - shared-data:/app/App_Data
+    restart: unless-stopped
+volumes:
+  shared-data:
