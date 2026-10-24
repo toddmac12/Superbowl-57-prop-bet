@@ -14,6 +14,12 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run check
       - run: npm test
+      - run: npm run test:cloudflare
+        env:
+          WRANGLER_SEND_METRICS: false
+      - run: npm run cloudflare:check
+        env:
+          WRANGLER_SEND_METRICS: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
