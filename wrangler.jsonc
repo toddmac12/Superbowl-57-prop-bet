@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "commcrae-super-bowl-picks",
+  "name": "superbowl-57-prop-bet",
   "main": "cloudflare/worker.mjs",
   "compatibility_date": "2026-10-24",
   "compatibility_flags": ["nodejs_compat"],
