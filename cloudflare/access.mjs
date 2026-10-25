@@ -8,7 +8,7 @@ export function secure(response) {
   const headers = new Headers(response.headers);
   headers.set('Cache-Control', 'private, no-store');
   headers.set('X-Content-Type-Options', 'nosniff');
-  headers.set('Referrer-Policy', 'no-referrer');
+  headers.set('Referrer-Policy', 'same-origin');
   headers.set('X-Frame-Options', 'DENY');
   headers.set('Strict-Transport-Security', 'max-age=31536000');
   headers.set('Vary', 'Cookie');
