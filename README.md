@@ -115,3 +115,8 @@ All hosted pages, assets and APIs require the app access cookie. The server-only
 
 Failed and successful login attempts count toward a persistent ten-attempt/15-minute limit per client IP in the existing SQLite Durable Object. `Lock app` clears the app-access cookie without deleting game data. `node --test tests/access.test.mjs` verifies cookie isolation, code handling and request boundaries; `npm run test:cloudflare` checks the real Workers/Durable Object runtime.
 
+
+## CommCrae access administration
+The app gate now uses server-tracked, app-isolated sessions from https://commcrae.com. The hub `/admin` manages PINs, idle/absolute session limits, access pause and session revocation. No app PIN grants admin rights. Existing organizer and participant authentication remains separate from the outer app gate. Publish this branch only after the matching hub has deployed. Background session polling never extends idle time; explicit Lock revokes the server session and locks other tabs.
+
+Session adapter tests: `node --test tests/access.test.mjs`. The Cloudflare business-runtime integration uses a test-only authorized entrypoint; production always validates the app session before dispatching to the application.

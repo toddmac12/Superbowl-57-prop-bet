@@ -2,8 +2,8 @@ import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
 import handlerModule from '../shared/handler.js';
 import schema from '../shared/schema.js';
-import { access, secure } from './access.mjs';
-import verifier from './access-verifier.mjs';
+import { sessionAccess, secure } from './session.mjs';
+
 
 // All API requests use one object: entry/session/game transactions share one SQLite database.
 export class PicksStore extends DurableObject {
@@ -63,12 +63,15 @@ export default {
   async fetch(request,env){
     const url=new URL(request.url);
     if(!env.PUBLIC_ORIGIN||url.origin!==env.PUBLIC_ORIGIN)return new Response('Use the configured game address.',{status:404});
-    const blocked=await access(request,{
-      title:'Picks App',secret:env.ORGANIZER_KEY,code:env.APP_ACCESS_CODE,
-      verifier:env.APP_ACCESS_CODE?undefined:verifier,
-      consume:key=>env.PICKS_STORE.get(env.PICKS_STORE.idFromName('shared-games-v1')).consumePinAttempt(key)
-    });
+    const blocked=await sessionAccess(request,{app:'picks'});
     if(blocked)return blocked;
+    return serveAuthorized(request,env);
+  }
+};
+
+// Called only after session validation by the production entrypoint.
+export async function serveAuthorized(request,env){
+    const url=new URL(request.url);
     if(url.pathname.startsWith('/api/')){
       if(typeof env.ORGANIZER_KEY!=='string'||env.ORGANIZER_KEY.length<32)return new Response('Organizer setup is required.',{status:503});
       const headers=new Headers(request.headers);headers.set('x-picks-client-ip',request.headers.get('CF-Connecting-IP')||'unknown');
@@ -79,5 +82,4 @@ export default {
     if(url.pathname==='/super-bowl.php')url.pathname='/offline.html';
     if(!files.has(url.pathname))return security(new Response('Not found',{status:404}));
     return secure(security(await env.ASSETS.fetch(new Request(url,request))));
-  }
-};
+}
