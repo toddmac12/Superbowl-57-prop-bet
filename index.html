@@ -1,58 +1,32 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Super Bowl LVII · Prediction Score Sheet</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="core.js" defer></script>
-  <script src="app.js" defer></script>
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Super Bowl Picks · Shared Games</title><link rel="stylesheet" href="hosted.css"><script src="hosted.js" defer></script></head>
 <body>
-  <a class="skip" href="#sheet">Skip to score sheet</a>
-  <header class="hero">
-    <div><p class="eyebrow">Eagles vs. Chiefs · Super Bowl LVII</p><h1>Make your picks.<br>Track every point.</h1>
-      <p class="intro">A 25-question prediction game, with saved entries and a live leaderboard as you enter results.</p></div>
-    <div class="score-card"><span id="answered">No participant</span><strong id="score">Add your name to start</strong><span id="settled"></span></div>
-  </header>
-  <main>
-    <noscript><p class="warning">Enable JavaScript to use saved predictions and scoring.</p></noscript>
-    <p id="storage-warning" class="warning" role="alert" hidden></p>
-    <section class="panel controls" aria-labelledby="participants-heading">
-      <h2 id="participants-heading">Your game sheet</h2>
-      <p class="muted">Stored in this browser. Export JSON for a backup or to move the sheet to another device.</p>
-      <form id="add-participant" class="add-form">
-        <div><label for="name">New participant</label><input id="name" name="name" maxlength="60" placeholder="Enter a name" required autocomplete="off"></div>
-        <button type="submit" class="primary">Add participant</button>
+<header><a class="brand" href="/">SUPER BOWL PICKS</a><nav><a href="/">Games</a><a href="/entry">My entry</a><a href="/organizer">Organizer</a><a href="/offline.html">Previous local LVII sheet</a><form method="post" action="/_access/logout"><button type="submit" class="secondary">Lock app</button></form></nav></header>
+<main>
+  <p id="notice" role="status" aria-live="polite">Loading…</p>
+  <section id="home-view" hidden><p class="eyebrow">Every season · One shared game</p><h1>Make your picks.<br>Keep the competition fair.</h1><p class="intro">Open an invitation, submit your predictions, and keep your private entry link. Picks become public only at the game's reveal time.</p><label for="year-filter">Super Bowl year</label><select id="year-filter"><option value="all">All years</option></select><div id="game-list" class="cards"></div></section>
+  <section id="login-view" class="panel" hidden><h1>Organizer sign-in</h1><p>Use the private organizer key from the server. It is separate from participant links.</p><form id="login-form"><label for="organizer-key">Organizer key</label><input id="organizer-key" type="password" required autocomplete="current-password"><button type="submit">Sign in</button></form></section>
+  <section id="organizer-view" hidden>
+    <div class="title-row"><h1>Organizer dashboard</h1><button id="logout" class="secondary" type="button">Sign out</button></div>
+    <label for="organizer-game">Game</label><select id="organizer-game"><option value="">Create a new game</option></select>
+    <section class="panel"><h2 id="settings-title">Create game</h2><p>Review all player names and thresholds before publishing. Questions, scoring rules, and times freeze when published.</p>
+      <form id="game-settings">
+        <div class="grid"><div><label for="game-title">Title</label><input id="game-title" maxlength="100" required placeholder="Super Bowl 2027"></div><div><label for="season">NFL season (previous calendar year)</label><input id="season" type="number" min="1990" max="2200" required></div>
+        <div><label for="kickoff">Kickoff (your local time)</label><input id="kickoff" type="datetime-local" required></div><div><label for="lock-time">Submission deadline (your local time)</label><input id="lock-time" type="datetime-local" required></div><div><label for="reveal-time">Public reveal (your local time)</label><input id="reveal-time" type="datetime-local" required></div>
+        <div><label for="team-a">Team A</label><input id="team-a" maxlength="60" required></div><div><label for="team-b">Team B</label><input id="team-b" maxlength="60" required></div></div>
+        <h3>Named players</h3><div id="player-fields" class="grid"></div>
+        <h3>Question thresholds</h3><p class="muted">These are organizer-chosen game thresholds, not automatically fetched sportsbook lines.</p><div id="threshold-fields" class="grid"></div>
+        <button id="save-game" type="submit">Save draft game</button>
       </form>
-      <div class="participant-row"><div><label for="participant">Active participant</label><select id="participant"></select></div>
-        <button id="rename" type="button">Rename</button><button id="remove" type="button">Remove</button></div>
-      <div class="toolbar">
-        <button id="export" type="button">Export JSON</button>
-        <label class="file-button" for="import">Import JSON<input id="import" type="file" accept=".json,application/json"></label>
-        <button id="csv" type="button">Export scores CSV</button><button id="print" type="button">Print</button>
-        <button id="reset" class="danger" type="button">Reset sheet</button>
-      </div>
-      <p id="status" role="status" aria-live="polite">Ready. Changes save automatically in this browser.</p>
+      <div id="game-review"></div><button id="publish-game" type="button" hidden>Publish and freeze game</button>
+      <div id="invitation" hidden><label for="invitation-link">Share this invitation</label><input id="invitation-link" readonly><a id="open-game" class="button secondary" href="/">Open game page</a></div>
     </section>
-    <div class="workspace">
-      <section id="sheet" class="panel" aria-labelledby="sheet-title">
-        <div class="tabs" aria-label="Sheet view">
-          <button id="picks-tab" type="button" aria-pressed="true">Predictions</button>
-          <button id="results-tab" type="button" aria-pressed="false">Result key</button>
-        </div>
-        <h2 id="sheet-title">Your predictions</h2><p id="sheet-help" class="muted"></p>
-        <div id="questions"></div>
-      </section>
-      <aside class="panel standings" aria-labelledby="standings-title">
-        <p class="eyebrow">One correct pick · One point</p><h2 id="standings-title">Leaderboard</h2>
-        <p class="muted">Scores use settled, non-void results only. Equal scores share a rank.</p>
-        <div class="table-wrap"><table><caption class="sr-only">Participants ranked by correct predictions</caption>
-          <thead><tr><th scope="col">Rank</th><th scope="col">Participant</th><th scope="col">Correct</th><th scope="col">Picks</th></tr></thead>
-          <tbody id="leaderboard"></tbody></table></div>
-      </aside>
-    </div>
-  </main>
-  <footer>Historical Super Bowl LVII questions. Results are entered manually; no live sports feed is connected.</footer>
-</body>
-</html>
+    <section id="entries-panel" class="panel" hidden><h2>Entries and recovery</h2><p>Only submitted entries count. Picks stay hidden here until public reveal. If a participant loses their link, verify who they are before issuing a replacement.</p><div id="organizer-entries"></div><div id="recovery-link"></div></section>
+    <section id="results-panel" class="panel" hidden><h2>Result key</h2><p>Enter verified outcomes after the submission deadline. Every save records an explanation and revision.</p><form id="results-form"><div id="result-questions"></div><label for="result-reason">Explanation / correction reason</label><textarea id="result-reason" maxlength="500" required></textarea><label for="result-source">Public source URL (optional)</label><input id="result-source" type="url"><label class="check"><input id="results-final" type="checkbox">Results verified as final</label><button type="submit">Save results</button></form></section>
+  </section>
+  <section id="game-view" hidden><p class="eyebrow" id="game-season"></p><h1 id="public-title"></h1><p id="public-times"></p><p id="public-rules" class="rules"></p><section id="join-panel" class="panel"><h2>Join this game</h2><p>One entry per display name. A name alone does not verify a person's identity.</p><form id="join-form"><label for="display-name">Display name</label><input id="display-name" maxlength="60" required autocomplete="nickname"><label class="check"><input id="public-consent" type="checkbox" required>I understand my display name and submitted picks become public at the reveal time shown above.</label><button type="submit">Create my private entry</button></form></section><section id="created-entry" class="panel" hidden><h2>Keep your private link</h2><p>Anyone holding this link can access your entry. Save it somewhere private; there is no email recovery.</p><input id="management-link" readonly aria-label="Private management link"><a class="button" href="/entry">Continue to my picks</a></section><section class="panel"><h2>Leaderboard</h2><div id="public-leaderboard"></div></section><section class="panel"><h2>Results and corrections</h2><div id="public-results"></div></section></section>
+  <section id="entry-view" hidden><h1 id="entry-title">My entry</h1><p id="entry-times"></p><p id="entry-rules" class="rules"></p><div id="receipt" class="panel"></div><p id="entry-state"></p><form id="entry-form"><div class="entry-progress"><label for="picks-progress" id="picks-count">0 picks answered</label><progress id="picks-progress" value="0" max="25" aria-labelledby="picks-count"></progress><button id="next-unanswered" type="button" class="secondary">Go to next unanswered pick</button></div><div id="entry-questions"></div><div class="actions entry-actions"><button id="save-entry" type="button" class="secondary">Save draft</button><button id="submit-entry" type="submit">Submit all picks</button><button id="reload-entry" type="button" class="secondary">Reload accepted server state</button></div></form><p class="muted">Saving a draft does not replace your last submitted picks. Only a server receipt confirms acceptance. Keep your private link for later access.</p></section>
+</main>
+<footer>Private links replace participant passwords. Keep them private. Automated sports feeds and email recovery are not connected.</footer>
+</body></html>

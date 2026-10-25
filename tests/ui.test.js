@@ -6,7 +6,7 @@ const { JSDOM } = require("jsdom");
 const root = path.join(__dirname, "..");
 const KEY = "super-bowl-lvii-sheet-v1";
 function page(saved, storageFails = false, storageBackend = null) {
-  const dom = new JSDOM(fs.readFileSync(path.join(root,"index.html"),"utf8"),
+  const dom = new JSDOM(fs.readFileSync(path.join(root,"offline.html"),"utf8"),
     { url:"https://sheet.example/", runScripts:"outside-only" });
   const w = dom.window;
   if (storageBackend) Object.defineProperty(w,"localStorage",{value:storageBackend});

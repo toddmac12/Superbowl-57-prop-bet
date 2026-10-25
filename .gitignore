@@ -1,3 +1,13 @@
 node_modules/
 playwright-report/
 test-results/
+
+App_Data/
+.env
+*.db
+*.db-wal
+*.db-shm
+
+.wrangler/
+.dev.vars*
+cloudflare/public/

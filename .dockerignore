@@ -1,0 +1,8 @@
+.git
+node_modules
+App_Data
+.env
+*.db
+*.db-wal
+*.db-shm
+tests

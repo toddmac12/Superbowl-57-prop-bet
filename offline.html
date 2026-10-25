@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Super Bowl LVII · Prediction Score Sheet</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="core.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#sheet">Skip to score sheet</a>
+  <header class="hero">
+    <div><p class="eyebrow">Eagles vs. Chiefs · Super Bowl LVII</p><h1>Make your picks.<br>Track every point.</h1>
+      <p class="intro">A 25-question prediction game, with saved entries and a live leaderboard as you enter results.</p></div>
+    <div class="score-card"><span id="answered">No participant</span><strong id="score">Add your name to start</strong><span id="settled"></span></div>
+  </header>
+  <main>
+    <noscript><p class="warning">Enable JavaScript to use saved predictions and scoring.</p></noscript>
+    <p id="storage-warning" class="warning" role="alert" hidden></p>
+    <section class="panel controls" aria-labelledby="participants-heading">
+      <h2 id="participants-heading">Your game sheet</h2>
+      <p class="muted">Stored in this browser. Export JSON for a backup or to move the sheet to another device.</p>
+      <form id="add-participant" class="add-form">
+        <div><label for="name">New participant</label><input id="name" name="name" maxlength="60" placeholder="Enter a name" required autocomplete="off"></div>
+        <button type="submit" class="primary">Add participant</button>
+      </form>
+      <div class="participant-row"><div><label for="participant">Active participant</label><select id="participant"></select></div>
+        <button id="rename" type="button">Rename</button><button id="remove" type="button">Remove</button></div>
+      <div class="toolbar">
+        <button id="export" type="button">Export JSON</button>
+        <label class="file-button" for="import">Import JSON<input id="import" type="file" accept=".json,application/json"></label>
+        <button id="csv" type="button">Export scores CSV</button><button id="print" type="button">Print</button>
+        <button id="reset" class="danger" type="button">Reset sheet</button>
+      </div>
+      <p id="status" role="status" aria-live="polite">Ready. Changes save automatically in this browser.</p>
+    </section>
+    <div class="workspace">
+      <section id="sheet" class="panel" aria-labelledby="sheet-title">
+        <div class="tabs" aria-label="Sheet view">
+          <button id="picks-tab" type="button" aria-pressed="true">Predictions</button>
+          <button id="results-tab" type="button" aria-pressed="false">Result key</button>
+        </div>
+        <h2 id="sheet-title">Your predictions</h2><p id="sheet-help" class="muted"></p>
+        <div id="questions"></div>
+      </section>
+      <aside class="panel standings" aria-labelledby="standings-title">
+        <p class="eyebrow">One correct pick · One point</p><h2 id="standings-title">Leaderboard</h2>
+        <p class="muted">Scores use settled, non-void results only. Equal scores share a rank.</p>
+        <div class="table-wrap"><table><caption class="sr-only">Participants ranked by correct predictions</caption>
+          <thead><tr><th scope="col">Rank</th><th scope="col">Participant</th><th scope="col">Correct</th><th scope="col">Picks</th></tr></thead>
+          <tbody id="leaderboard"></tbody></table></div>
+      </aside>
+    </div>
+  </main>
+  <footer>Historical Super Bowl LVII questions. Results are entered manually; no live sports feed is connected.</footer>
+</body>
+</html>
