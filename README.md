@@ -109,3 +109,9 @@ The organizer key is required as a Cloudflare secret. Rotating it invalidates pr
 The domain is not connected and the app is not live merely by merging this code: Cloudflare account authentication, the secret, deployment, DNS verification, and custom-domain activation must be completed. Annual sports feeds and email recovery remain unconnected.
 
 For GitHub-connected Cloudflare Builds, use the `superbowl-57-prop-bet` Worker name and the branch containing `wrangler.jsonc` (currently `feat/shared-participant-submissions` until PR #2 is merged). Deploy with `npx wrangler deploy`; Wrangler runs the configured asset build. Deploying the older static-only main branch causes incorrect automatic static-site detection.
+# Hosted app access code
+
+All hosted pages, assets and APIs require the app access cookie. The server-only salted PBKDF2 verifier in `cloudflare/access-verifier.mjs` is a fallback; set the optional `APP_ACCESS_CODE` runtime secret to override it when rotating the code. Never place plaintext codes in public assets. Signed cookies use the existing private organizer key, are scoped to this host and app, and expire after eight hours. Rotating the access code or organizer key invalidates the app-access sessions. The separate organizer and participant authorizations still apply after unlocking the app.
+
+Failed and successful login attempts count toward a persistent ten-attempt/15-minute limit per client IP in the existing SQLite Durable Object. `Lock app` clears the app-access cookie without deleting game data. `node --test tests/access.test.mjs` verifies cookie isolation, code handling and request boundaries; `npm run test:cloudflare` checks the real Workers/Durable Object runtime.
+

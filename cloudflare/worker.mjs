@@ -2,12 +2,16 @@ import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
 import handlerModule from '../shared/handler.js';
 import schema from '../shared/schema.js';
+import { access, secure } from './access.mjs';
+import verifier from './access-verifier.mjs';
 
 // All API requests use one object: entry/session/game transactions share one SQLite database.
 export class PicksStore extends DurableObject {
   constructor(ctx,env){
     super(ctx,env);
     const sql=ctx.storage.sql;
+    this.ctx=ctx;
+    sql.exec('CREATE TABLE IF NOT EXISTS app_access_attempts (key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, expires INTEGER NOT NULL)');
     ctx.storage.transactionSync(()=>{
       sql.exec('PRAGMA foreign_keys=ON');
       for(const statement of schema.split(';').filter(s=>s.trim()))sql.exec(statement);
@@ -21,6 +25,14 @@ export class PicksStore extends DurableObject {
       })
     };
     this.handle=handlerModule.createHandler({db,organizerKey:env.ORGANIZER_KEY,publicOrigin:env.PUBLIC_ORIGIN});
+  }
+  async consumePinAttempt(key) {
+    const now=Date.now(),sql=this.ctx.storage.sql;
+    return this.ctx.storage.transactionSync(()=>{
+      sql.exec('DELETE FROM app_access_attempts WHERE expires <= ?',now);
+      sql.exec('INSERT INTO app_access_attempts (key,attempts,expires) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=attempts+1',key,now+900000);
+      return sql.exec('SELECT attempts FROM app_access_attempts WHERE key=?',key).toArray()[0].attempts<=10;
+    });
   }
   async fetch(request){
     // The outer Worker overwrites this header using Cloudflare's trusted client address.
@@ -51,15 +63,21 @@ export default {
   async fetch(request,env){
     const url=new URL(request.url);
     if(!env.PUBLIC_ORIGIN||url.origin!==env.PUBLIC_ORIGIN)return new Response('Use the configured game address.',{status:404});
+    const blocked=await access(request,{
+      title:'Picks App',secret:env.ORGANIZER_KEY,code:env.APP_ACCESS_CODE,
+      verifier:env.APP_ACCESS_CODE?undefined:verifier,
+      consume:key=>env.PICKS_STORE.get(env.PICKS_STORE.idFromName('shared-games-v1')).consumePinAttempt(key)
+    });
+    if(blocked)return blocked;
     if(url.pathname.startsWith('/api/')){
       if(typeof env.ORGANIZER_KEY!=='string'||env.ORGANIZER_KEY.length<32)return new Response('Organizer setup is required.',{status:503});
       const headers=new Headers(request.headers);headers.set('x-picks-client-ip',request.headers.get('CF-Connecting-IP')||'unknown');
-      return env.PICKS_STORE.get(env.PICKS_STORE.idFromName('shared-games-v1')).fetch(new Request(request,{headers}));
+      return secure(await env.PICKS_STORE.get(env.PICKS_STORE.idFromName('shared-games-v1')).fetch(new Request(request,{headers})));
     }
     if(!['GET','HEAD'].includes(request.method))return security(new Response('Not found',{status:404}));
     if(['/','/organizer','/entry'].includes(url.pathname)||/^\/game\/[a-f0-9-]{36}$/.test(url.pathname))url.pathname='/index.html';
     if(url.pathname==='/super-bowl.php')url.pathname='/offline.html';
     if(!files.has(url.pathname))return security(new Response('Not found',{status:404}));
-    return security(await env.ASSETS.fetch(new Request(url,request)));
+    return secure(security(await env.ASSETS.fetch(new Request(url,request))));
   }
 };
