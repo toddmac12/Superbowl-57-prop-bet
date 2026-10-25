@@ -16,7 +16,7 @@ export async function sessionAccess(r,{app,fetcher=fetch}){const u=new URL(r.url
  }
  if(p==='/_access/logout'){
   if(r.method!=='POST'||r.headers.get('Origin')!==u.origin)return secure(new Response('Forbidden',{status:403}));
-  const result=await call('logout');if(!result.ok)return secure(new Response('Unable to lock. Try again.',{status:503}));return redirect('/_access',[cookie(COOKIE,'',true)]);
+  const result=await call('logout');if(!result.ok)return secure(new Response('Unable to lock. Try again.',{status:503}));return secure(new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>App locked · CommCrae</title></head><body><main><h1>App locked</h1><p>Your session has ended.</p><p><a href="/_access">Unlock app</a></p><p><a href="https://commcrae.com/">All apps</a></p></main></body></html>',{headers:{'Content-Type':'text/html; charset=utf-8','Set-Cookie':cookie(COOKIE,'',true)}}));
  }
  if(p==='/_access'&&r.method==='GET')return start();
  if(p==='/_access/client.js')return secure(new Response(clientScript,{headers:{'Content-Type':'application/javascript; charset=utf-8'}}));
