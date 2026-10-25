@@ -107,3 +107,5 @@ Free hosting has usage caps, not unlimited capacity. Cloudflare currently docume
 The organizer key is required as a Cloudflare secret. Rotating it invalidates previous organizer sessions when the updated deployment initializes the database handler. SQLite data survives deployments and idle periods. Use Cloudflare's SQLite Durable Object recovery/bookmark tooling for recovery; do not delete its namespace to redeploy. There is no automatic database export or cross-host migration UI in this version.
 
 The domain is not connected and the app is not live merely by merging this code: Cloudflare account authentication, the secret, deployment, DNS verification, and custom-domain activation must be completed. Annual sports feeds and email recovery remain unconnected.
+
+For GitHub-connected Cloudflare Builds, use the `superbowl-57-prop-bet` Worker name and the branch containing `wrangler.jsonc` (currently `feat/shared-participant-submissions` until PR #2 is merged). Deploy with `npx wrangler deploy`; Wrangler runs the configured asset build. Deploying the older static-only main branch causes incorrect automatic static-site detection.
